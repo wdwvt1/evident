@@ -87,7 +87,8 @@ if session['demo']!="true":
     filtered_biom_table = parse_biom_table(StringIO(session['filtered_biom_table']))
     if viz=='pcoa':
         try:
-            webgl_string = generate_pcoa_cloud_from_point_in_omega(
+            webgl_string, session['pcoa_centers_radii'] = \
+                generate_pcoa_cloud_from_point_in_omega(
 										mapping_file_tuple=mapping_file_tuple,
 										biom_object=filtered_biom_table,
 										metric='unifrac',

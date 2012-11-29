@@ -9,7 +9,7 @@ __maintainer__ = "Antonio Gonzalez Pena"
 __email__ = "antgonza@gmail.com"
 __status__ = "Development"
 
-__all__ = ['subsampling','map_sample_space']
+__all__ = ['subsampling','map_sample_space','cluster_intersection','pcoa']
 
 import logging
 from os import chmod

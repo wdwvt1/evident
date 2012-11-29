@@ -1,0 +1,80 @@
+<%
+__author__ = "William Van Treuren"
+__copyright__ = "Copyright 2012, Evident"
+__credits__ = ["William Van Treuren"]
+__license__ = "GPL"
+__version__ = ".9dev"
+__maintainer__ = "William Van Treuren"
+__email__ = "wdwvt1@gmail.com"
+__status__ = "Development"
+
+"""
+This facillitates interaction between the session and cluster_intersection. 
+"""
+
+from mod_python import Session
+from biom.parse import parse_biom_table
+from StringIO import StringIO
+from qiime.parse import mapping_file_to_dict
+from evident.cluster_intersection import (calculate_cluster_intersections,
+    cluster_intersections)
+from numpy import array, where, triu
+
+# we need the biom table so we can rarify. filtered_biom_table is unrarified.
+# proof that filtered_biom_table is unrarefied
+# x = array([filtered_biom_table.observationData(i) for i in \
+#   filtered_biom_table.ObservationIds])
+# req.write(str(x.sum(0)))
+filtered_biom_table = parse_biom_table(StringIO(session['filtered_biom_table']))
+
+# we need to have the mapping file to make cluster_intersection work correctly.
+# its computationally inexpensive to rebuild it from the mapping file tuple.
+pmf = mapping_file_to_dict(session['mapping_file_tuple'][0],
+    session['mapping_file_tuple'][1])
+
+
+########
+# NOTE #
+########
+# category is currently set to 'AGE' so that it will work on the Fierer et al. 
+# data. this will need to be replaced with the input of the user.
+# iters is also being set to 10, this will have to be a form input as well.
+
+# observed_cluster_intersections is the intersections of the observed clusters
+# from the actual run when pcoa was selected and run was clicked. 
+observed_cluster_intersections, treatments = \
+    cluster_intersections(category='AGE', parsed_mf=pmf, 
+    pcoa_centers_radii=session['pcoa_centers_radii'], intersections=None)
+
+clust_array, n_treatments = calculate_cluster_intersections(category='AGE', 
+    parsed_mf=pmf, biom_object=filtered_biom_table, metric='Euclidean', 
+    num_seqs=session['sequences'], iterations=10, axes=3,tree_object=None)
+
+# treatments and n_treatments have the same order
+
+iters = 10
+result = triu(where(observed_cluster_intersections!=0,
+    clust_array/float(iters),1-clust_array/float(iters)),1)
+
+req.write('Intersections of displayed cloud clusters.<br>')
+for i in observed_cluster_intersections:
+    req.write(str(i)+'<br>')
+
+req.write('Fraction of the time the clusters had the same interaction'+\
+    ' (i.e. did intersect or did not intersect) as the displayed cloud.<br>')
+for i in result:
+    req.write(str(i)+'<br>')
+
+req.write(str(treatments))
+
+#req.write(str(observed_cluster_intersections))
+#req.write(str(clust_array))
+#req.write(str(session.keys()))
+
+
+
+
+#req.write(str(session['pcoa_center_radii']))
+
+
+%>
